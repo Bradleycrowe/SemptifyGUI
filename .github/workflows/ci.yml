@@ -179,7 +179,7 @@ jobs:
     name: Publish image to Docker Hub
     runs-on: ubuntu-latest
     needs: publish-image
-    if: startsWith(github.ref, 'refs/tags/') && (secrets.DOCKERHUB_USERNAME != null && secrets.DOCKERHUB_TOKEN != null)
+    if: startsWith(github.ref, 'refs/tags/') && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != ''
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -201,27 +201,15 @@ jobs:
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/semptifygui:latest
 
   create-release:
-    name: Create GitHub Release and attach image info
+    name: Create GitHub Release and attach artifacts
     runs-on: ubuntu-latest
-    needs: publish-image
+    needs: [publish-image, generate-sbom]
     if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: ${{ github.ref_name }}
-          body: |
-            Release ${{ github.ref_name }}
-            
-            Changes:
-            ${{ github.event.head_commit.message }}
 
       - name: Download image info artifact
         uses: actions/download-artifact@v4
@@ -233,20 +221,18 @@ jobs:
         with:
           name: sbom-${{ github.ref_name }}
 
-      - name: Upload Trivy reports (artifact)
-        uses: actions/upload-artifact@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: trivy-reports-${{ github.run_id }}
-          path: trivy-report.sarif
-
-      - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom-${{ github.ref_name }}
-          path: sbom.json
-
-      - name: Upload image info artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: image-info-${{ github.ref_name }}
-          path: image-info.txt
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: |
+            Release ${{ github.ref_name }}
+            
+            Changes:
+            ${{ github.event.head_commit.message }}
+          files: |
+            image-info.txt
+            sbom.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
