@@ -8,9 +8,9 @@
   <body>
     <h1>SBOM files</h1>
     <ul>
-      {% for f in files %}
+{%- for f in files %}
       <li><a href="/sbom/{{ f }}?token=devtoken">{{ f }}</a></li>
-      {% endfor %}
+{%- endfor %}
     </ul>
     <p><a href="/admin?token=devtoken">Back</a></p>
   </body>

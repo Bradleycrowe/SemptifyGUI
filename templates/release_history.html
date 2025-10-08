@@ -8,9 +8,9 @@
   <body>
     <h1>Release History</h1>
     <ul>
-      {% for r in data %}
+{%- for r in data %}
       <li>{{ r.tag }} - {{ r.sha }} - {{ r.timestamp }}</li>
-      {% endfor %}
+{%- endfor %}
     </ul>
     <p><a href="/admin?token=devtoken">Back</a></p>
   </body>
