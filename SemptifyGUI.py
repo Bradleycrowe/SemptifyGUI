@@ -50,9 +50,53 @@ def _inc(metric: str, amt: int = 1):
         METRICS[metric] = METRICS.get(metric, 0) + amt
 
 def _metrics_text() -> str:
+    """Generate Prometheus-compatible metrics with HELP and TYPE annotations."""
     lines = []
-    for k, v in METRICS.items():
-        lines.append(f"{k} {v}")
+    
+    # Metric metadata (HELP and TYPE)
+    metrics_meta = {
+        'requests_total': {
+            'help': 'Total number of HTTP requests received',
+            'type': 'counter'
+        },
+        'admin_requests_total': {
+            'help': 'Total number of admin route requests (after successful authorization)',
+            'type': 'counter'
+        },
+        'admin_actions_total': {
+            'help': 'Total number of mutating admin operations (releases, workflow triggers)',
+            'type': 'counter'
+        },
+        'errors_total': {
+            'help': 'Total number of errors encountered',
+            'type': 'counter'
+        },
+        'releases_total': {
+            'help': 'Total number of release tags created',
+            'type': 'counter'
+        },
+        'rate_limited_total': {
+            'help': 'Total number of rate-limited requests',
+            'type': 'counter'
+        },
+        'breakglass_used_total': {
+            'help': 'Total number of break-glass authentication events',
+            'type': 'counter'
+        },
+        'token_rotations_total': {
+            'help': 'Total number of admin token rotations',
+            'type': 'counter'
+        }
+    }
+    
+    # Output metrics with HELP and TYPE annotations
+    for metric_name, metric_value in METRICS.items():
+        if metric_name in metrics_meta:
+            meta = metrics_meta[metric_name]
+            lines.append(f"# HELP {metric_name} {meta['help']}")
+            lines.append(f"# TYPE {metric_name} {meta['type']}")
+        lines.append(f"{metric_name} {metric_value}")
+    
     return "\n".join(lines) + "\n"
 
 app = Flask(__name__)
@@ -116,7 +160,20 @@ def index():
     # Use a Jinja2 template so UI can be extended without changing the route.
     message = "SemptifyGUI is live. Buttons coming next."
     _inc('requests_total')
-    return render_template("index.html", message=message, folders=folders)
+    
+    # Folder descriptions for the landing page
+    folder_descriptions = {
+        'uploads': 'File uploads and temporary processing',
+        'logs': 'Application logs and event history',
+        'copilot_sync': 'Copilot synchronization data',
+        'final_notices': 'Generated notices and documents',
+        'security': 'Token files and security credentials'
+    }
+    
+    return render_template("index.html", 
+                         message=message, 
+                         folders=folders,
+                         folder_descriptions=folder_descriptions)
 
 
 @app.route("/health")

@@ -1,0 +1,192 @@
+name: SBOM Diff
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  sbom-diff:
+    name: Compare SBOM with previous version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need history to find previous tags
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Generate current SBOM
+        run: |
+          # Install Syft
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          
+          # Generate SBOM for current repository state
+          syft dir:. -o json > sbom-current.json
+          echo "✓ Generated current SBOM"
+      
+      - name: Find previous release tag
+        id: prev_tag
+        run: |
+          # Get the most recent tag before current
+          if [ "${{ github.ref_type }}" == "tag" ]; then
+            CURRENT_TAG="${{ github.ref_name }}"
+            # Get previous tag (sorted by version, excluding current)
+            PREV_TAG=$(git tag --sort=-v:refname | grep -v "^${CURRENT_TAG}$" | head -n1 || echo "")
+          else
+            # If not a tag, just get latest tag
+            PREV_TAG=$(git tag --sort=-v:refname | head -n1 || echo "")
+          fi
+          
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found - this may be the first release"
+            echo "has_previous=false" >> $GITHUB_OUTPUT
+          else
+            echo "Previous tag: $PREV_TAG"
+            echo "has_previous=true" >> $GITHUB_OUTPUT
+            echo "tag=$PREV_TAG" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Download previous SBOM artifact
+        if: steps.prev_tag.outputs.has_previous == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ci.yml
+          name: sbom-${{ steps.prev_tag.outputs.tag }}
+          path: ./previous
+          check_artifacts: true
+          search_artifacts: true
+      
+      - name: Generate previous SBOM from checkout
+        if: steps.prev_tag.outputs.has_previous == 'true'
+        continue-on-error: true
+        run: |
+          # If artifact download failed, checkout previous tag and generate SBOM
+          if [ ! -f previous/sbom.json ]; then
+            echo "Artifact not found, generating SBOM from previous tag checkout"
+            git checkout ${{ steps.prev_tag.outputs.tag }}
+            syft dir:. -o json > sbom-previous.json
+            git checkout -
+          else
+            echo "Using downloaded artifact"
+            cp previous/sbom.json sbom-previous.json
+          fi
+      
+      - name: Compare SBOMs
+        if: steps.prev_tag.outputs.has_previous == 'true'
+        id: compare
+        run: |
+          # Install jq for JSON processing
+          sudo apt-get update && sudo apt-get install -y jq
+          
+          # Extract package lists
+          echo "Extracting package information..."
+          
+          # Current packages
+          jq -r '.artifacts[]? | "\(.name)@\(.version)"' sbom-current.json | sort > packages-current.txt || touch packages-current.txt
+          
+          # Previous packages
+          if [ -f sbom-previous.json ]; then
+            jq -r '.artifacts[]? | "\(.name)@\(.version)"' sbom-previous.json | sort > packages-previous.txt
+          else
+            touch packages-previous.txt
+          fi
+          
+          # Find differences
+          echo "## SBOM Differences" > sbom-diff-report.md
+          echo "" >> sbom-diff-report.md
+          echo "Comparing current state with tag: \`${{ steps.prev_tag.outputs.tag }}\`" >> sbom-diff-report.md
+          echo "" >> sbom-diff-report.md
+          
+          # Added packages
+          ADDED=$(comm -13 packages-previous.txt packages-current.txt)
+          if [ -n "$ADDED" ]; then
+            echo "### ➕ Added Packages" >> sbom-diff-report.md
+            echo "\`\`\`" >> sbom-diff-report.md
+            echo "$ADDED" >> sbom-diff-report.md
+            echo "\`\`\`" >> sbom-diff-report.md
+            echo "" >> sbom-diff-report.md
+            ADDED_COUNT=$(echo "$ADDED" | wc -l)
+          else
+            ADDED_COUNT=0
+          fi
+          
+          # Removed packages
+          REMOVED=$(comm -23 packages-previous.txt packages-current.txt)
+          if [ -n "$REMOVED" ]; then
+            echo "### ➖ Removed Packages" >> sbom-diff-report.md
+            echo "\`\`\`" >> sbom-diff-report.md
+            echo "$REMOVED" >> sbom-diff-report.md
+            echo "\`\`\`" >> sbom-diff-report.md
+            echo "" >> sbom-diff-report.md
+            REMOVED_COUNT=$(echo "$REMOVED" | wc -l)
+          else
+            REMOVED_COUNT=0
+          fi
+          
+          # Summary
+          echo "### Summary" >> sbom-diff-report.md
+          echo "- Added: ${ADDED_COUNT} packages" >> sbom-diff-report.md
+          echo "- Removed: ${REMOVED_COUNT} packages" >> sbom-diff-report.md
+          echo "- Previous total: $(wc -l < packages-previous.txt) packages" >> sbom-diff-report.md
+          echo "- Current total: $(wc -l < packages-current.txt) packages" >> sbom-diff-report.md
+          
+          # Output summary
+          echo "added=${ADDED_COUNT}" >> $GITHUB_OUTPUT
+          echo "removed=${REMOVED_COUNT}" >> $GITHUB_OUTPUT
+          
+          cat sbom-diff-report.md
+      
+      - name: Upload SBOM diff report
+        if: steps.prev_tag.outputs.has_previous == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-diff-report-${{ github.run_id }}
+          path: |
+            sbom-diff-report.md
+            sbom-current.json
+            packages-current.txt
+      
+      - name: Comment on PR with SBOM diff
+        if: github.event_name == 'pull_request' && steps.prev_tag.outputs.has_previous == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('sbom-diff-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+      
+      - name: First release - save baseline
+        if: steps.prev_tag.outputs.has_previous == 'false'
+        run: |
+          echo "## SBOM Baseline (First Release)" > sbom-diff-report.md
+          echo "" >> sbom-diff-report.md
+          echo "This is the first SBOM generation - no comparison available." >> sbom-diff-report.md
+          echo "" >> sbom-diff-report.md
+          echo "Total packages: $(jq -r '.artifacts[]? | "\(.name)@\(.version)"' sbom-current.json | wc -l)" >> sbom-diff-report.md
+          cat sbom-diff-report.md
+      
+      - name: Upload baseline SBOM
+        if: steps.prev_tag.outputs.has_previous == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-baseline-${{ github.run_id }}
+          path: sbom-current.json

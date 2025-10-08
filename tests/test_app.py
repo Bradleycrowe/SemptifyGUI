@@ -12,4 +12,7 @@ def client():
 def test_index(client):
     rv = client.get('/')
     assert rv.status_code == 200
-    assert b"SemptifyGUI is live" in rv.data
+    # Check for key landing page elements
+    assert b"Semptify" in rv.data
+    assert b"Tenant Justice Automation" in rv.data
+    assert b"Learn More" in rv.data
