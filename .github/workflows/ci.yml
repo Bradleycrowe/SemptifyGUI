@@ -51,7 +51,7 @@ jobs:
     needs: test-and-build
     steps:
     - name: Run Trivy scan
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.20.0
       with:
         image-ref: semptifygui:ci
         format: 'sarif'
@@ -120,10 +120,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Generate SBOM with Syft
-        uses: anchore/syft-action@v0.13.0
+        uses: anchore/syft-action@v1.0.1
         with:
           image: semptifygui:latest
-          output: sbom.json
+          output-file: sbom.json
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
