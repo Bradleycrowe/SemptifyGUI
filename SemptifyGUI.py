@@ -1118,6 +1118,7 @@ def packet_preview():
         'issues': (request.form.get('issues') or '').strip(),
         'parties': (request.form.get('parties') or '').strip(),
         'date': (request.form.get('date') or _utc_now().strftime('%Y-%m-%d')).strip(),
+        'timeline': (request.form.get('timeline') or '').strip(),
         'sig_name': (request.form.get('sig_name') or '').strip(),
         'sig_consented': 'yes' if (request.form.get('sig_consented') in ('on','yes','true','1')) else 'no'
     }
@@ -1136,6 +1137,7 @@ def packet_save():
     issues = (request.form.get('issues') or '').strip()
     parties = (request.form.get('parties') or '').strip()
     date = (request.form.get('date') or _utc_now().strftime('%Y-%m-%d')).strip()
+    timeline = (request.form.get('timeline') or '').strip()
     sig_name = (request.form.get('sig_name') or '').strip()
     sig_consented = request.form.get('sig_consented') in ('on','yes','true','1')
     if not sig_name or not sig_consented:
@@ -1150,6 +1152,8 @@ def packet_save():
         f"{summary}\n\n"
         "Key Issues:\n"
         f"{issues}\n\n"
+        "Timeline (Calendar Format):\n"
+        f"{timeline if timeline else '(No timeline entries provided)'}\n\n"
         "Checklist:\n"
         "- Cover Page\n- Summary Sheet\n- Evidence Index\n- Exhibits\n- Timeline\n- Witness Statements\n- Final Page (signature/date)\n\n"
         "Attestation:\n"

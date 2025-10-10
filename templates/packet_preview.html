@@ -16,6 +16,7 @@
       'Parties: ' ~ data.parties ~ '\n\n' ~
       'Summary:\n' ~ data.summary ~ '\n\n' ~
       'Key Issues:\n' ~ data.issues ~ '\n\n' ~
+      'Timeline (Calendar Format):\n' ~ (data.timeline if data.timeline else '(No timeline entries provided)') ~ '\n\n' ~
       'Checklist:\n- Cover Page\n- Summary Sheet\n- Evidence Index\n- Exhibits\n- Timeline\n- Witness Statements\n- Final Page (signature/date)\n\n' ~
       'Attestation:\n' ~
       'I declare under penalty of perjury that this summary accurately reflects the attached materials to the best of my knowledge.\n\n' ~
@@ -31,6 +32,7 @@
         <input type="hidden" name="issues" value="{{ data.issues }}">
         <input type="hidden" name="parties" value="{{ data.parties }}">
         <input type="hidden" name="date" value="{{ data.date }}">
+        <input type="hidden" name="timeline" value="{{ data.timeline }}">
   <input type="hidden" name="sig_name" value="{{ data.sig_name }}">
   <input type="hidden" name="sig_consented" value="{{ data.sig_consented }}">
   <button type="submit">Save to My Vault</button>

@@ -24,6 +24,15 @@ Use this checklist to prepare a clean packet for filing, mediation, or sharing w
 
 5) Timeline
    - Chronological list of important events with dates
+   - Use format: YYYY-MM-DD - Event description
+   - Include all key dates: lease signing, complaints, notices, violations, repairs, payments
+   - Example timeline entries:
+     * 2024-01-15 - Lease signed
+     * 2024-03-10 - First complaint about maintenance issue
+     * 2024-04-01 - Written notice sent to landlord
+     * 2024-05-15 - Issue remains unresolved
+   - Keep entries brief but specific
+   - Focus on factual events with dates you can verify
 
 6) Witness Statements (if any)
    - Signed and dated templates per witness
