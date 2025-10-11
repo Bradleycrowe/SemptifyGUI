@@ -1599,5 +1599,23 @@ def rotate_token():
     _inc('token_rotations_total')
     return redirect('/admin')
 
+# -----------------------------
+# Virtual Office: Meeting Rooms and Assistance
+# -----------------------------
+
+@app.route('/office', methods=['GET'])
+def virtual_office():
+    """Virtual office landing page - meeting rooms and AI assistant access."""
+    _inc('requests_total')
+    return render_template('office.html')
+
+@app.route('/office/meeting', methods=['GET'])
+def virtual_meeting():
+    """Virtual meeting room with integrated AI assistance."""
+    _inc('requests_total')
+    csrf = _render_csrf()
+    provider = _ai_provider()
+    return render_template('meeting.html', csrf_token=csrf, provider=provider)
+
 if __name__ == "__main__":
     app.run(debug=True)

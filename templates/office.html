@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Virtual Office - Semptify</title>
+    <link rel="stylesheet" href="/static/css/app.css" />
+    <style>
+      .office-container { max-width: 900px; margin: 2rem auto; padding: 1rem; }
+      .office-header { text-align: center; margin-bottom: 2rem; }
+      .office-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+      .office-card { background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s; }
+      .office-card:hover { transform: translateY(-4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+      .office-card h3 { margin-top: 0; color: #0a7cd0; }
+      .office-card p { color: #666; line-height: 1.6; }
+      .office-card a { display: inline-block; margin-top: 1rem; padding: 0.5rem 1rem; background: #0a7cd0; color: white; text-decoration: none; border-radius: 4px; }
+      .office-card a:hover { background: #085a9f; }
+      .feature-list { list-style: none; padding-left: 0; }
+      .feature-list li { padding: 0.5rem 0; padding-left: 1.5rem; position: relative; }
+      .feature-list li:before { content: "✓"; position: absolute; left: 0; color: #0a7cd0; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <div class="office-container">
+      <div class="office-header">
+        <h1>Virtual Office</h1>
+        <p>Your personal workspace for tenant advocacy and support</p>
+      </div>
+
+      <div class="office-grid">
+        <div class="office-card">
+          <h3>Meeting Room</h3>
+          <p>Hold virtual meetings with AI assistance available whenever you need help.</p>
+          <ul class="feature-list">
+            <li>Real-time AI assistant access</li>
+            <li>Document your meeting notes</li>
+            <li>Get instant answers to tenant rights questions</li>
+          </ul>
+          <a href="/office/meeting">Enter Meeting Room</a>
+        </div>
+
+        <div class="office-card">
+          <h3>AI Assistant</h3>
+          <p>Access the Semptify AI Copilot for help with any tenant-related questions.</p>
+          <ul class="feature-list">
+            <li>Draft letters and documents</li>
+            <li>Understand your rights</li>
+            <li>Get guidance on next steps</li>
+          </ul>
+          <a href="/copilot">Open AI Assistant</a>
+        </div>
+
+        <div class="office-card">
+          <h3>Document Vault</h3>
+          <p>Securely store and manage all your important tenant documents.</p>
+          <ul class="feature-list">
+            <li>Upload and organize files</li>
+            <li>Access from anywhere</li>
+            <li>Keep everything in one place</li>
+          </ul>
+          <a href="/vault">Go to Vault</a>
+        </div>
+
+        <div class="office-card">
+          <h3>Resources</h3>
+          <p>Access templates, forms, and tools to help you with your tenancy.</p>
+          <ul class="feature-list">
+            <li>Witness statement templates</li>
+            <li>Filing packet checklists</li>
+            <li>Service animal request forms</li>
+          </ul>
+          <a href="/resources">View Resources</a>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 2rem;">
+        <a href="/" style="color: #0a7cd0; text-decoration: none;">&larr; Back to Home</a>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Meeting Room - Virtual Office</title>
+    <link rel="stylesheet" href="/static/css/app.css" />
+    <style>
+      .meeting-container { max-width: 1200px; margin: 1rem auto; padding: 1rem; }
+      .meeting-header { text-align: center; margin-bottom: 1.5rem; }
+      .meeting-layout { display: grid; grid-template-columns: 1fr 400px; gap: 1.5rem; }
+      .meeting-main { background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+      .meeting-sidebar { background: #f6f8fa; border-radius: 8px; padding: 1.5rem; }
+      .notes-area { width: 100%; min-height: 300px; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: vertical; }
+      .assistant-section { background: #fff; border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+      .assistant-section h3 { margin-top: 0; color: #0a7cd0; font-size: 1.1rem; }
+      .assistant-form textarea { width: 100%; min-height: 100px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical; }
+      .assistant-form button { margin-top: 0.5rem; padding: 0.5rem 1rem; background: #0a7cd0; color: white; border: none; border-radius: 4px; cursor: pointer; }
+      .assistant-form button:hover { background: #085a9f; }
+      .assistant-answer { margin-top: 1rem; background: #f6f8fa; padding: 1rem; border-radius: 4px; white-space: pre-wrap; font-size: 0.9rem; max-height: 300px; overflow-y: auto; }
+      .meeting-info { background: #e8f4f8; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem; }
+      .meeting-info p { margin: 0.5rem 0; }
+      .btn-primary { padding: 0.75rem 1.5rem; background: #0a7cd0; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
+      .btn-primary:hover { background: #085a9f; }
+      .btn-secondary { padding: 0.75rem 1.5rem; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; margin-left: 0.5rem; }
+      .btn-secondary:hover { background: #5a6268; }
+      .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #28a745; margin-right: 0.5rem; animation: pulse 2s infinite; }
+      @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+      .muted { color: #666; font-size: 0.9em; }
+      @media (max-width: 768px) {
+        .meeting-layout { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="meeting-container">
+      <div class="meeting-header">
+        <h1>Virtual Meeting Room</h1>
+        <p><span class="status-indicator"></span>Meeting room is active</p>
+      </div>
+
+      <div class="meeting-layout">
+        <div class="meeting-main">
+          <div class="meeting-info">
+            <p><strong>Meeting started:</strong> <span id="meeting-time"></span></p>
+            <p><strong>Purpose:</strong> Tenant advocacy discussion and planning</p>
+          </div>
+
+          <h2>Meeting Notes</h2>
+          <p class="muted">Use this space to document your meeting discussion, decisions, and action items.</p>
+          <textarea id="meeting-notes" class="notes-area" placeholder="Start typing your meeting notes here...&#10;&#10;Topics to discuss:&#10;- &#10;&#10;Decisions made:&#10;- &#10;&#10;Action items:&#10;- "></textarea>
+
+          <div style="margin-top: 1rem;">
+            <button class="btn-primary" onclick="saveNotes()">Save Notes</button>
+            <button class="btn-secondary" onclick="clearNotes()">Clear</button>
+          </div>
+          <p id="save-status" class="muted" style="margin-top: 0.5rem;"></p>
+        </div>
+
+        <div class="meeting-sidebar">
+          <h2 style="margin-top: 0;">AI Assistant</h2>
+          <p class="muted">Need help during your meeting? Ask the AI assistant anything about tenant rights, forms, or next steps.</p>
+
+          {% if provider in ['none',''] %}
+            <div style="background: #fff3cd; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
+              <p class="muted" style="margin: 0;">AI provider is not configured. Set AI_PROVIDER and related environment variables to enable assistance.</p>
+            </div>
+          {% else %}
+            <div class="assistant-section">
+              <h3>Ask a Question</h3>
+              <form id="assistant-form" class="assistant-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                <textarea id="assistant-prompt" name="prompt" placeholder="e.g. How do I document a maintenance issue?"></textarea>
+                <button type="submit">Ask Assistant</button>
+              </form>
+              <div id="assistant-answer" class="assistant-answer muted">No question asked yet.</div>
+            </div>
+          {% endif %}
+
+          <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #ddd;">
+            <h3 style="font-size: 1rem;">Quick Actions</h3>
+            <ul style="list-style: none; padding-left: 0;">
+              <li style="margin: 0.5rem 0;"><a href="/resources">View Resources</a></li>
+              <li style="margin: 0.5rem 0;"><a href="/vault">Document Vault</a></li>
+              <li style="margin: 0.5rem 0;"><a href="/copilot">Full AI Assistant</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 2rem;">
+        <a href="/office" style="color: #0a7cd0; text-decoration: none;">&larr; Back to Virtual Office</a>
+      </div>
+    </div>
+
+    <script>
+      // Display current time as meeting start time
+      document.getElementById('meeting-time').textContent = new Date().toLocaleString();
+
+      // Save notes to localStorage
+      function saveNotes() {
+        const notes = document.getElementById('meeting-notes').value;
+        const timestamp = new Date().toISOString();
+        const savedData = {
+          notes: notes,
+          timestamp: timestamp
+        };
+        localStorage.setItem('semptify-meeting-notes', JSON.stringify(savedData));
+        document.getElementById('save-status').textContent = 'Notes saved at ' + new Date().toLocaleTimeString();
+      }
+
+      // Clear notes
+      function clearNotes() {
+        if (confirm('Are you sure you want to clear your notes?')) {
+          document.getElementById('meeting-notes').value = '';
+          document.getElementById('save-status').textContent = 'Notes cleared';
+        }
+      }
+
+      // Load saved notes on page load
+      window.addEventListener('load', () => {
+        const saved = localStorage.getItem('semptify-meeting-notes');
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            document.getElementById('meeting-notes').value = data.notes;
+            document.getElementById('save-status').textContent = 'Last saved: ' + new Date(data.timestamp).toLocaleString();
+          } catch (e) {
+            console.error('Error loading saved notes:', e);
+          }
+        }
+      });
+
+      // AI Assistant form handler
+      {% if provider not in ['none',''] %}
+      const assistantForm = document.getElementById('assistant-form');
+      const assistantAnswer = document.getElementById('assistant-answer');
+      
+      assistantForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const prompt = document.getElementById('assistant-prompt').value.trim();
+        const csrf = assistantForm.querySelector('input[name="csrf_token"]').value;
+        
+        if (!prompt) {
+          assistantAnswer.textContent = 'Please enter a question.';
+          return;
+        }
+        
+        assistantAnswer.textContent = 'Thinking...';
+        
+        try {
+          const response = await fetch('/api/copilot', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': csrf
+            },
+            body: JSON.stringify({ prompt })
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            assistantAnswer.textContent = `Error (${response.status}): ${data && data.error ? data.error : 'Unknown error'}`;
+          } else {
+            assistantAnswer.textContent = data.output || '(empty)';
+          }
+        } catch (err) {
+          assistantAnswer.textContent = 'Network error: ' + err;
+        }
+      });
+      {% endif %}
+    </script>
+  </body>
+</html>
