@@ -24,4 +24,4 @@ jobs:
           path: docs
 
       - name: Publish
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4
