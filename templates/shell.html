@@ -1,43 +1,116 @@
 <!doctype html>
-
 <html lang="en">
-
   <head>
-
     <meta charset="utf-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <title>{% block title %}Semptify{% endblock %}</title>
-
-  <link rel="stylesheet" href="/static/css/app.css" />
-  <link rel="icon" type="image/x-icon" href="/static/icons/favicon.ico" />
+    <link rel="stylesheet" href="/static/css/app.css" />
+    <link rel="icon" type="image/x-icon" href="/static/icons/favicon.ico" />
     {% block head_extra %}{% endblock %}
     <style>
-      /* Simplified header and sidebar styling */
-  .top-bar { display:flex; align-items:center; gap:1rem; }
-      .nav-container { display:flex; gap:1.25rem; align-items:flex-end; }
-      .office-link {
-        font-size:0.92rem;
-        color:#444;
-        font-weight:500;
-        position:absolute;
-        right:0;
-        bottom:0;
-        margin-right:0.5rem;
-        margin-bottom:0.15rem;
-        background:rgba(255,255,255,0.85);
-        border-radius:4px;
-        padding:2px 10px;
-        box-shadow:0 2px 8px rgba(0,0,0,0.04);
-        z-index:100;
-
-        position:sticky;
-        top:12px; /* stick to top under header */
-        max-height:calc(100vh - 140px);
-        overflow-y:auto;
-        text-align:center;
-        font-size:0.92rem; /* slightly smaller */
+      .top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f8f9fa;
+        padding: 0.5rem 1.5rem;
+        border-bottom: 1px solid #e5e5e5;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2a2a2a;
+        text-decoration: none;
+        gap: 0.5rem;
+      }
+      .logo img {
+        height: 36px;
+        width: 36px;
+        object-fit: contain;
+      }
+      .nav-center {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        gap: 2.5rem;
+      }
+      .nav-center a {
+        color: #333;
+        text-decoration: none;
+        font-size: 1.08rem;
+        font-weight: 500;
+        padding: 0.25rem 0.5rem;
+        transition: color 0.2s;
+      }
+      .nav-center a:hover {
+        color: #007bff;
+      }
+      .topbar-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+      }
+      .topbar-actions .btn {
+        padding: 0.4rem 1.1rem;
+        font-size: 1rem;
+        border-radius: 5px;
+        border: none;
+        background: #007bff;
+        color: #fff;
+        font-weight: 500;
+        cursor: pointer;
+        margin-bottom: 2px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        transition: background 0.2s;
+      }
+      .topbar-actions .btn:last-child {
+        background: #28a745;
+      }
+      .topbar-actions .btn:hover {
+        opacity: 0.92;
+      }
+    </style>
+  <style>
+    .right-sidebar {
+      background: transparent !important;
+    }
+    .right-sidebar h5 {
+      text-align: left !important;
+      margin-bottom: 1rem !important;
+      margin-left: 8px !important;
+    }
+    .right-sidebar ul {
+      margin: 0 0 0 8px !important;
+      display: block !important;
+      text-align: left !important;
+      padding-left: 0 !important;
+    }
+  </style>
+  </head>
+  <body>
+    <header>
+      <div class="top-bar">
+        <a href="/" class="logo">
+          <img src="/static/icons/favicon.ico" alt="Semptify Logo" />
+          Semptify
+        </a>
+        <nav class="nav-center">
+          <a href="/">Home</a>
+          <a href="/library">Library</a>
+          <a href="/office">Office</a>
+          <a href="/tools">Tools</a>
+          <a href="/vault">Vault</a>
+          <a href="/help">Help</a>
+        </nav>
+        <div class="topbar-actions">
+          <a href="/register" class="btn">New User Registration</a>
+          <a href="/static/app-download.zip" class="btn">User App Download</a>
+        </div>
+      </div>
+    </header>
       }
       .right-sidebar h5 { text-align:center; margin-bottom:1rem; }
       .right-sidebar ul { margin:0 auto; display:block; text-align:center; padding-left:0; }

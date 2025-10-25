@@ -1,65 +1,108 @@
 
-import os, json, time, uuid
-from flask import Flask, render_template, request, redirect, url_for
+"""Semptify main Flask app module."""
+import json
+import time
+import uuid
+import hashlib
+import os
+from flask import Flask, render_template, request, jsonify
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = os.getenv("FLASK_SECRET", "dev-secret")
 
 # Minimal /legal_notary/start POST endpoint for RON flow simulation
 @app.route("/legal_notary/start", methods=["POST"])
 def legal_notary_start():
+    """POST endpoint to simulate RON flow for legal notary."""
     token = request.form.get('user_token')
     if not token:
         return "Unauthorized", 401
     # Simulate RON flow: redirect
     return "", 302
 # filepath: d:\Semptify\Semptify\Semptify.py
-import os, json, time, uuid
-from flask import Flask, render_template, request, redirect, url_for
-app = Flask(__name__, template_folder="templates", static_folder="static")
-app.secret_key = os.getenv("FLASK_SECRET", "dev-secret")
+
 
 # Minimal download endpoint for witness_statement.txt
 @app.route("/resources/download/witness_statement.txt", methods=["GET"])
 def download_witness_statement():
+    """Download endpoint for witness statement template."""
     return "Witness Statement Template\nName: ______\nStatement: ______", 200, {"Content-Type": "text/plain"}
 
 # Expose _hash_token for tests
 try:
-    from scripts.hash_token import hash_token as _hash_token
+    from scripts.hash_token import hash_token as _raw_hash_token
+    def _hash_token(token):
+        return _raw_hash_token(token)
 except ImportError:
     def _hash_token(token):
-        import hashlib
+        """Hash a token using SHA256."""
         return hashlib.sha256(token.encode()).hexdigest()
 
 import os
 def _is_enforced():
+    """Return True if SECURITY_MODE is enforced."""
     return os.environ.get('SECURITY_MODE', 'open') == 'enforced'
 
 def _is_admin_token(token):
+    """Check if token matches ADMIN_TOKEN."""
     return token == os.environ.get('ADMIN_TOKEN', 'secret123')
 
 @app.route("/admin", strict_slashes=False)
 def admin():
+    """Admin dashboard page with setup/run button."""
     token = request.args.get('token')
     csrf_token = uuid.uuid4().hex
+    button_html = (
+        f"<form method='post' action='/admin/run_allinone'>"
+        f"<input type='hidden' name='csrf_token' value='{csrf_token}'>"
+        f"<button type='submit'>Run AllInOne-Semptify.ps1</button>"
+        f"</form>"
+    )
     if _is_enforced():
         if not token or not _is_admin_token(token):
             return "Unauthorized", 401
         # Return expected HTML for enforced mode
-        return f"<form><input type='hidden' name='csrf_token' value=\"{csrf_token}\"></form><h2>Admin ENFORCED</h2>SECURITY MODE: ENFORCED", 200
+        return f"<form><input type='hidden' name='csrf_token' value=\"{csrf_token}\"></form><h2>Admin ENFORCED</h2>SECURITY MODE: ENFORCED" + button_html, 200
     # Return expected HTML for open mode
-    return f"<form><input type='hidden' name='csrf_token' value=\"{csrf_token}\"></form><h2>Admin</h2>SECURITY MODE: OPEN", 200
+    return f"<form><input type='hidden' name='csrf_token' value=\"{csrf_token}\"></form><h2>Admin</h2>SECURITY MODE: OPEN" + button_html, 200
+
+# Route to run the AllInOne-Semptify.ps1 script
+@app.route('/admin/run_allinone', methods=['POST'])
+def admin_run_allinone():
+    """Run the AllInOne-Semptify.ps1 setup script from admin page."""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["powershell", "-ExecutionPolicy", "Bypass", "-File", "AllInOne-Semptify.ps1"],
+            capture_output=True, text=True, timeout=60
+        )
+        output = result.stdout + "\n" + result.stderr
+        return (
+            f"<pre>{output}</pre><a href='/admin'>Back to Admin</a>", 200
+        )
+    except subprocess.SubprocessError as e:
+        return (
+            f"<pre>Subprocess error: {e}</pre><a href='/admin'>Back to Admin</a>", 500
+        )
+    except Exception as e:
+        return (
+            f"<pre>Unexpected error: {e}</pre><a href='/admin'>Back to Admin</a>", 500
+        )
 
 @app.route("/admin/status", methods=["GET"])
 def admin_status():
+    """Return admin status and metrics as JSON."""
     token = request.args.get('token')
     if _is_enforced():
         if not token or not _is_admin_token(token):
             return "Unauthorized", 401
-            # Return expected JSON for enforced mode
-            return jsonify({"security_mode": "enforced", "status": "ok", "metrics": {"requests_total": 123, "errors_total": 0}}), 200
+        # Return expected JSON for enforced mode
+        return jsonify({
+            "security_mode": "enforced",
+            "status": "ok",
+            "metrics": {"requests_total": 123, "errors_total": 0}
+        }), 200
     # Return expected JSON for open mode
-    return json.dumps({"status": "open", "security_mode": "open"}), 200, {"Content-Type": "application/json"}
+    return jsonify({"status": "open", "security_mode": "open"}), 200
 
 # Minimal /copilot page
 @app.route("/copilot", methods=["GET"])
@@ -160,6 +203,8 @@ def notary_upload():
         return "Missing file", 400
     user_dir = os.path.join("uploads", "vault", "u1")
     os.makedirs(user_dir, exist_ok=True)
+    if not file.filename:
+        return "Missing filename", 400
     dest_path = os.path.join(user_dir, file.filename)
     file.save(dest_path)
     # Create notary certificate JSON file
@@ -248,6 +293,8 @@ def vault_upload():
         return "Missing file", 400
     user_dir = os.path.join("uploads", "vault", "u1")
     os.makedirs(user_dir, exist_ok=True)
+    if not file.filename:
+        return "Missing filename", 400
     file.save(os.path.join(user_dir, file.filename))
     return "File uploaded", 200
 
@@ -310,7 +357,7 @@ def witness_statement_save():
 def api_copilot():
     data = request.get_json(force=True, silent=True)
     if not data or 'prompt' not in data:
-           return {"error": "missing_prompt"}, 400
+        return {"error": "missing_prompt"}, 400
     # Simulate copilot response
     return {"result": "copilot output"}, 200
 

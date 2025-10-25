@@ -50,7 +50,17 @@ def save_user_token(plain=None):
         plain = str(int(time.time()))[-6:]
     h = hashlib.sha256(plain.encode()).hexdigest()
     data = _load_json(USERS_FILE)
-    data[plain] = {"hash":h,"created":int(time.time())}
-    open(USERS_FILE,"w",encoding="utf-8").write(json.dumps(data,indent=2))
+    if not isinstance(data, list):
+        data = []
+    user_id = f"u{time.strftime('%Y%m%d%H%M%S')}{uuid.uuid4().hex[:6]}"
+    entry = {
+        "id": user_id,
+        "hash": f"sha256:{h}",
+        "enabled": True,
+        "name": "Test User"
+    }
+    data.append(entry)
+    with open(USERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
     return plain
 
