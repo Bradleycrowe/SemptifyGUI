@@ -257,7 +257,7 @@ try:
     app.register_blueprint(admin_bp)
 except Exception:
     pass
-for m in ("register","metrics","readyz","vault"):
+for m in ("register","metrics","readyz","vault","semptify_gui"):
     try:
         mod = __import__(m)
         app.register_blueprint(getattr(mod, m + "_bp"))

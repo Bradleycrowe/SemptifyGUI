@@ -1,0 +1,7 @@
+/* Minimal styling for the Semptify GUI demo */
+body { font-family: Arial, Helvetica, sans-serif; margin: 24px; }
+h1 { color: #2b6cb0; }
+form { margin-top: 12px; }
+input { padding: 6px; margin: 4px 0; }
+button { padding: 6px 10px; }
+#complaint-result { background:#f7fafc; padding:10px; border:1px solid #e2e8f0; margin-top:12px; }

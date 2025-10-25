@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Delivery Options</title>
+    <link rel="stylesheet" href="/static/semptify_gui/style.css">
+  </head>
+  <body>
+    <h1>Choose delivery method</h1>
+    <p>Select how you'd like this document delivered. The UI demonstrates available options and required fields.</p>
+
+    <form id="delivery-form">
+      <label for="method">Method:</label>
+      <select id="method" name="method"></select>
+
+      <div id="method-fields"></div>
+
+      <button type="submit">Create & Send</button>
+    </form>
+
+    <pre id="delivery-result"></pre>
+
+    <script src="/static/semptify_gui/delivery.js"></script>
+  </body>
+</html>

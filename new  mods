@@ -1,0 +1,59 @@
+# Semptify Unified Scaffold Setup
+# Run this once to create the full directory + file structure for Semptify
+
+$root = "Semptify"
+
+# Define folder structure
+$folders = @(
+    "$root/SemptifyGUI/modules",
+    "$root/Backend",
+    "$root/Docs",
+    "$root/Packaging"
+)
+
+# Define files
+$files = @(
+    "$root/SemptifyGUI/index.html",
+    "$root/SemptifyGUI/gui_offensive_bundle.html",
+    "$root/SemptifyGUI/rights_navigator_ui.html",
+
+    "$root/SemptifyGUI/modules/law_notes_module.html",
+    "$root/SemptifyGUI/modules/case_briefing.md",
+    "$root/SemptifyGUI/modules/complaint_generator.py",
+    "$root/SemptifyGUI/modules/escalation_engine.py",
+    "$root/SemptifyGUI/modules/public_exposure_module.py",
+    "$root/SemptifyGUI/modules/fraud_exposure_dashboard.py",
+    "$root/SemptifyGUI/modules/greed_watch_dashboard.py",
+    "$root/SemptifyGUI/modules/license_disruption_tracker.py",
+    "$root/SemptifyGUI/modules/broker_trail.py",
+    "$root/SemptifyGUI/modules/owner_trail.py",
+
+    "$root/Backend/backend_offensive_bundle.py",
+    "$root/Backend/api_routes.py",
+    "$root/Backend/db_connectors.py",
+
+    "$root/Docs/README.md",
+    "$root/Docs/how_to_use.md",
+    "$root/Docs/admin_notes.md",
+    "$root/Docs/recovery_notes.md",
+    "$root/Docs/handoff_to_P.md",
+
+    "$root/Packaging/setup.ps1"
+)
+
+# Create folders
+foreach ($f in $folders) {
+    if (-not (Test-Path $f)) {
+        New-Item -ItemType Directory -Path $f | Out-Null
+    }
+}
+
+# Create placeholder files
+foreach ($file in $files) {
+    if (-not (Test-Path $file)) {
+        New-Item -ItemType File -Path $file | Out-Null
+        Add-Content $file "# Placeholder for $([System.IO.Path]::GetFileName($file))"
+    }
+}
+
+Write-Host "✅ Semptify scaffold created successfully."
